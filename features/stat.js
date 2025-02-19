@@ -7,7 +7,7 @@ module.exports = (bot) => {
 
         try {
             const user = await pool.query("SELECT * FROM users WHERE user_id = $1", [userId]);
-            console.log("Database result:", user.rows);
+            console.log("Database result for /stat:", user.rows);
 
             if (user.rows.length === 0) {
                 return ctx.reply("❌ Kamu belum memiliki data! Kirim pesan di grup untuk mulai mengumpulkan XP.");
