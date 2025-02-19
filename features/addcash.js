@@ -25,16 +25,21 @@ module.exports = (bot) => {
             return ctx.reply("⚠️ Masukkan jumlah cash yang valid.");
         }
 
-        const user = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-        if (user.rows.length === 0) {
-            return ctx.reply("❌ Pengguna tidak ditemukan dalam database.");
+        try {
+            const user = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+            if (user.rows.length === 0) {
+                return ctx.reply("❌ Pengguna tidak ditemukan dalam database.");
+            }
+
+            const userId = user.rows[0].user_id;
+            const newCash = user.rows[0].cash + amount;
+
+            await pool.query("UPDATE users SET cash = $1 WHERE user_id = $2", [newCash, userId]);
+
+            ctx.reply(`✅ Berhasil menambahkan ${amount} cash ke @${username}.`);
+        } catch (error) {
+            console.error("Error in /addcash:", error);
+            ctx.reply("⚠️ Terjadi kesalahan saat menambahkan cash.");
         }
-
-        const userId = user.rows[0].user_id;
-        const newCash = user.rows[0].cash + amount;
-
-        await pool.query("UPDATE users SET cash = $1 WHERE user_id = $2", [newCash, userId]);
-
-        ctx.reply(`✅ Berhasil menambahkan ${amount} cash ke @${username}.`);
     });
 };
