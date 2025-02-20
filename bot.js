@@ -18,8 +18,7 @@ require("./features/mute_unmute")(bot);
 require("./features/kick_user")(bot);
 require("./features/ban_unban")(bot);
 require("./features/random_message")(bot);
-require("./features/level_system")(bot);
-require("./features/addcash")(bot);
+require("./features/bannerbot")(bot);
 // Menjalankan bot
 bot.launch().then(() => console.log("LuffyBot is online!"));
 
