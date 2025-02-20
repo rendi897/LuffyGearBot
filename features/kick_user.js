@@ -1,4 +1,4 @@
-module.exports = (bot, sendBanner) => {
+module.exports = (bot) => {
     const OWNER_ID = process.env.OWNER_ID; // ID pemilik bot dari .env
 
     bot.command("kick", async (ctx) => {
@@ -27,7 +27,7 @@ module.exports = (bot, sendBanner) => {
             console.error(error);
             ctx.reply("❌ Gagal mengeluarkan user.");
         }
-        sendBanner(ctx);
+        
     });
 
     async function isAdmin(ctx) {
@@ -45,5 +45,5 @@ module.exports = (bot, sendBanner) => {
         const chatAdmins = await ctx.getChatAdministrators();
         return chatAdmins.some(admin => admin.user.id === userId);
     }
-    sendBanner(ctx);
+    
 };
