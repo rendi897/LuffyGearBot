@@ -1,4 +1,4 @@
-const db = require("../firebase");
+const { db } = require("../firebase");
 
 module.exports = (bot) => {
     bot.on("message", async (ctx) => {
