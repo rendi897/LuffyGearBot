@@ -50,7 +50,8 @@ const messages = [
 ];
 
 function getRandomInterval() {
-    return Math.floor(Math.random() * (15 * 60 * 60 * 1000 - 30 * 60 * 1000 + 1)) + 30 * 60 * 1000;
+    // Interval acak antara 1 hingga 3 jam (1 - 3 jam)
+    return Math.floor(Math.random() * (3 * 60 * 60 * 1000 - 1 * 60 * 60 * 1000 + 1)) + 1 * 60 * 60 * 1000;
 }
 
 function sendRandomMessage(bot) {
