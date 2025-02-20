@@ -1,4 +1,4 @@
-module.exports = (bot, sendBanner) => {
+module.exports = (bot) => {
     const OWNER_ID = process.env.OWNER_ID; // ID pemilik bot dari .env
 
     bot.command("mute", async (ctx) => {
@@ -50,7 +50,7 @@ module.exports = (bot, sendBanner) => {
             console.error(error);
             ctx.reply("❌ Gagal melakukan mute user.");
         }
-        sendBanner(ctx);
+        
     });
 
     bot.command("unmute", async (ctx) => {
@@ -80,7 +80,7 @@ module.exports = (bot, sendBanner) => {
             console.error(error);
             ctx.reply("❌ Gagal melakukan unmute user.");
         }
-        sendBanner(ctx);
+        
     });
 
     bot.command("unadmin", async (ctx) => {
@@ -114,7 +114,7 @@ module.exports = (bot, sendBanner) => {
             console.error(error);
             ctx.reply("❌ Gagal menurunkan admin.");
         }
-        sendBanner(ctx);
+        
     });
 
     function parseDuration(input) {
@@ -146,5 +146,5 @@ module.exports = (bot, sendBanner) => {
         const chatAdmins = await ctx.getChatAdministrators();
         return chatAdmins.some(admin => admin.user.id === userId);
     }
-    sendBanner(ctx);
+    
 };
