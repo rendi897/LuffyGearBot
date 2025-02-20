@@ -1,16 +1,24 @@
-const fs = require("fs");
-const path = require("path");
+const os = require("os");
+const moment = require("moment");
 
 module.exports = (bot) => {
-  bot.use(async (ctx, next) => {
-    await next();
-    if (ctx.message && ctx.replyWithPhoto) {
-      const bannerPath = path.join(__dirname, "../assets/banner.jpg");
-      if (fs.existsSync(bannerPath)) {
-        await ctx.replyWithPhoto({ source: bannerPath }, { caption: "🤖 LuffyBot - Your Friendly Group Assistant!" });
-      } else {
-        await ctx.reply("🤖 LuffyBot - Your Friendly Group Assistant!");
-      }
-    }
-  });
+  // Fungsi untuk mengirimkan banner
+  const sendBanner = (ctx) => {
+    const uptime = moment.duration(os.uptime(), "seconds").humanize();
+    const botVersion = "LuffyBot v1.0"; // Ubah sesuai versi
+    const author = "Your Name"; // Ganti dengan nama author Anda
+
+    const banner = `
+      =======================
+      *${botVersion}*
+      Author: ${author}
+      Uptime: ${uptime}
+      =======================
+    `;
+
+    ctx.reply(banner);
+  };
+
+  // Ekspor fungsi sendBanner agar bisa dipanggil di fitur lain
+  return sendBanner;
 };
