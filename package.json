@@ -12,7 +12,8 @@
     "telegraf": "^4.12.2",
     "pg": "^8.11.1",
     "cron": "^3.0.0",
-    "@supabase/supabase-js": "^2.0.0"
+    "@supabase/supabase-js": "^2.0.0",
+    "moment": "^2.29.1"
   },
   "engines": {
     "node": ">=16"
