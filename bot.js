@@ -12,8 +12,6 @@ const app = express();
 app.get("/", (req, res) => res.send("LuffyBot is running!"));
 app.listen(PORT, () => console.log(`Express server running on port ${PORT}`));
 
-// Load banner bot terlebih dahulu
-const sendBanner = require("./features/bannerbot")(bot);
 // Load fitur bot
 require("./features/welcome_exit")(bot);
 require("./features/mute_unmute")(bot);
