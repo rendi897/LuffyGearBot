@@ -1,8 +1,14 @@
 const { MongoClient } = require("mongodb");
 const config = require("../config");
 
-const MONGO_URI = "mongodb+srv://REXBASE:Rendi2003@cluster0.qa066.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const client = new MongoClient(MONGO_URI);
+// Ganti dengan connection string MongoDB Atlas Anda
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://REXBASE:Rendi2003@cluster0.qa066.mongodb.net/botdb?retryWrites=true&w=majority&appName=Cluster0";
+
+const client = new MongoClient(MONGO_URI, {
+  tls: true, // Aktifkan TLS
+  tlsAllowInvalidCertificates: false, // Jangan izinkan sertifikat yang tidak valid
+});
+
 const db = client.db("botdb");
 const rentalsCollection = db.collection("rentals");
 
