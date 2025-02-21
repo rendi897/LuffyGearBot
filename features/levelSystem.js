@@ -18,11 +18,12 @@ async function registerUser(userId, username) {
         diamond: 0,
       };
       await usersCollection.insertOne(user);
+      console.log(`[registerUser] User registered: ${userId}`); // Logging
     }
 
     return user;
   } catch (error) {
-    console.error("Error registering user:", error);
+    console.error("[registerUser] Error:", error);
     throw new Error("Failed to register user");
   }
 }
@@ -45,12 +46,13 @@ async function addExp(userId, expToAdd) {
     if (user.exp >= expRequired) {
       user.level += 1;
       user.exp = 0;
+      console.log(`[addExp] User ${userId} leveled up to level ${user.level}`); // Logging
     }
 
     await usersCollection.updateOne({ userId }, { $set: user });
     return user;
   } catch (error) {
-    console.error("Error adding exp:", error);
+    console.error("[addExp] Error:", error);
     throw new Error("Failed to add exp");
   }
 }
@@ -62,9 +64,12 @@ async function getLevel(userId) {
 
   try {
     const user = await usersCollection.findOne({ userId });
-    return user ? user.level : 1;
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user.level;
   } catch (error) {
-    console.error("Error getting level:", error);
+    console.error("[getLevel] Error:", error);
     throw new Error("Failed to get level");
   }
 }
@@ -76,9 +81,12 @@ async function getExp(userId) {
 
   try {
     const user = await usersCollection.findOne({ userId });
-    return user ? user.exp : 0;
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user.exp;
   } catch (error) {
-    console.error("Error getting exp:", error);
+    console.error("[getExp] Error:", error);
     throw new Error("Failed to get exp");
   }
 }
@@ -98,9 +106,10 @@ async function addDiamond(userId, diamondToAdd) {
     const updatedDiamond = (user.diamond || 0) + diamondToAdd;
     await usersCollection.updateOne({ userId }, { $set: { diamond: updatedDiamond } });
 
+    console.log(`[addDiamond] Diamond added to user ${userId}. New diamond: ${updatedDiamond}`); // Logging
     return updatedDiamond;
   } catch (error) {
-    console.error("Error adding diamond:", error);
+    console.error("[addDiamond] Error:", error);
     throw new Error("Failed to add diamond");
   }
 }
@@ -112,9 +121,12 @@ async function getDiamond(userId) {
 
   try {
     const user = await usersCollection.findOne({ userId });
-    return user ? user.diamond : 0;
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user.diamond || 0;
   } catch (error) {
-    console.error("Error getting diamond:", error);
+    console.error("[getDiamond] Error:", error);
     throw new Error("Failed to get diamond");
   }
 }
@@ -138,9 +150,10 @@ async function deductDiamond(userId, diamondToDeduct) {
     const updatedDiamond = user.diamond - diamondToDeduct;
     await usersCollection.updateOne({ userId }, { $set: { diamond: updatedDiamond } });
 
+    console.log(`[deductDiamond] Diamond deducted from user ${userId}. New diamond: ${updatedDiamond}`); // Logging
     return updatedDiamond;
   } catch (error) {
-    console.error("Error deducting diamond:", error);
+    console.error("[deductDiamond] Error:", error);
     throw new Error("Failed to deduct diamond");
   }
 }
@@ -159,10 +172,11 @@ function setupLevelCommands(bot) {
       // Menambahkan exp setiap kali pengguna mengirim pesan
       await addExp(userId, 5); // Tambahkan 5 exp setiap pesan
     } catch (error) {
-      console.error("Error handling message:", error);
+      console.error("[message] Error:", error);
     }
   });
 
+  // Command /stat
   bot.command("stat", async (ctx) => {
     const userId = ctx.from.id;
 
@@ -173,11 +187,12 @@ function setupLevelCommands(bot) {
 
       ctx.reply(`Level: ${level}\nExp: ${exp}\n💎 Diamond: ${diamond}`);
     } catch (error) {
-      ctx.reply("❌ Gagal mengambil statistik pengguna.");
+      console.error("[stat] Error:", error);
+      ctx.reply("❌ Gagal mengambil statistik pengguna. Silakan coba lagi.");
     }
   });
 
-  // Command untuk menambah diamond (hanya admin atau owner)
+  // Command /isidm (hanya admin atau owner)
   bot.command("isidm", async (ctx) => {
     const userId = ctx.from.id;
 
@@ -205,11 +220,12 @@ function setupLevelCommands(bot) {
       const newDiamond = await addDiamond(targetUserId, diamondToAdd);
       ctx.reply(`✅ Berhasil menambahkan ${diamondToAdd} diamond ke user ${targetUserId}. Total diamond sekarang: ${newDiamond}`);
     } catch (error) {
+      console.error("[isidm] Error:", error);
       ctx.reply(`❌ Gagal menambahkan diamond: ${error.message}`);
     }
   });
 
-  // Command untuk mengecek user ID
+  // Command /myid
   bot.command("myid", (ctx) => {
     const userId = ctx.from.id;
     ctx.reply(`User ID Anda adalah: ${userId}`);
