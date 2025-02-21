@@ -1,61 +1,53 @@
-const mongoose = require("mongoose");
-const { Telegraf } = require("telegraf");
+const { MongoClient } = require("mongodb");
 const config = require("../config");
 
-// Koneksi MongoDB
-mongoose.connect(config.mongodb_uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const MONGO_URI = "mongodb+srv://username:password@cluster.mongodb.net/botdb";
+const client = new MongoClient(MONGO_URI);
+const db = client.db("botdb");
+const rentalsCollection = db.collection("rentals");
 
-const SewaSchema = new mongoose.Schema({
-  userId: { type: Number, required: true, unique: true },
-  expireAt: { type: Date, required: true },
-});
+async function connectDB() {
+  try {
+    await client.connect();
+    console.log("✅ Terhubung ke MongoDB");
+  } catch (error) {
+    console.error("❌ Gagal terhubung ke MongoDB:", error);
+  }
+}
 
-const Sewa = mongoose.model("Sewa", SewaSchema);
+connectDB();
 
-module.exports = function sewaSystem(bot) {
-  bot.command("sewa", async (ctx) => {
-    if (!config.owners.includes(ctx.from.id)) {
-      return ctx.reply("❌ Hanya pemilik bot yang bisa menyewakan akses.");
-    }
-    
-    const args = ctx.message.text.split(" ").slice(1);
-    if (args.length < 2) {
-      return ctx.reply("❌ Gunakan format: /sewa <user_id> <durasi_hari>");
-    }
+async function checkUserAccess(userId) {
+  const rental = await rentalsCollection.findOne({ userId, expiresAt: { $gt: Date.now() } });
+  return rental ? true : false;
+}
 
-    const userId = parseInt(args[0]);
-    const durasiHari = parseInt(args[1]);
-    if (isNaN(userId) || isNaN(durasiHari)) {
-      return ctx.reply("❌ ID pengguna dan durasi harus berupa angka.");
-    }
+async function addRental(ownerId, userId, durationDays) {
+  if (!config.owners.includes(ownerId)) {
+    return "❌ Anda tidak memiliki izin untuk menambah sewa.";
+  }
 
-    const expireAt = new Date();
-    expireAt.setDate(expireAt.getDate() + durasiHari);
+  const expiresAt = Date.now() + durationDays * 24 * 60 * 60 * 1000;
+  await rentalsCollection.updateOne(
+    { userId },
+    { $set: { userId, expiresAt } },
+    { upsert: true }
+  );
 
-    try {
-      await Sewa.findOneAndUpdate(
-        { userId },
-        { expireAt },
-        { upsert: true, new: true }
-      );
-      ctx.reply(`✅ Akses diberikan ke ${userId} selama ${durasiHari} hari.`);
-    } catch (error) {
-      console.error(error);
-      ctx.reply("❌ Terjadi kesalahan saat menyewa akses.");
-    }
-  });
+  return `✅ Sukses! Akses diberikan selama ${durationDays} hari.`;
+}
 
-  bot.command("ceksewa", async (ctx) => {
-    const userId = ctx.from.id;
-    const data = await Sewa.findOne({ userId });
-    
-    if (!data || new Date() > data.expireAt) {
-      return ctx.reply("❌ Anda tidak memiliki akses.");
-    }
+async function removeRental(ownerId, userId) {
+  if (!config.owners.includes(ownerId)) {
+    return "❌ Anda tidak memiliki izin untuk menghapus sewa.";
+  }
 
-    ctx.reply(`✅ Akses aktif hingga: ${data.expireAt.toLocaleString()}`);
-  });
+  await rentalsCollection.deleteOne({ userId });
+  return `✅ Akses user ${userId} telah dihapus.`;
+}
+
+module.exports = {
+  checkUserAccess,
+  addRental,
+  removeRental
 };
