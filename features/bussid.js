@@ -42,6 +42,25 @@ module.exports = function bussid(bot) {
       ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
     }
   });
+
+  // Menambahkan handler untuk command /inject <value>
+  bot.command("inject", async (ctx) => {
+    const userId = ctx.from.id;
+    const value = parseInt(ctx.message.text.split(" ")[1]);
+
+    // Validasi apakah nilai yang dimasukkan valid
+    if (isNaN(value) || value <= 0) {
+      return ctx.reply("❌ Mohon masukkan nilai yang valid untuk inject, misalnya `/inject 1000000`.");
+    }
+
+    const sessionTicket = userSessions[userId];
+    if (!sessionTicket) {
+      return ctx.reply("❌ Anda belum login. Silakan login terlebih dahulu.");
+    }
+
+    const label = `${value} UB`;
+    await ctx.reply(await addRp(sessionTicket, value, label));
+  });
 };
 
 // Fungsi untuk login dengan Device ID
@@ -85,17 +104,13 @@ function showMenu(ctx, sessionTicket, bot) {
 
   ctx.reply("Pilih opsi yang diinginkan:", Markup.inlineKeyboard([
     [
-      Markup.button.callback("Tambahkan 500k UB", "inject_500k"),
-      Markup.button.callback("Tambahkan 800k UB", "inject_800k"),
-      Markup.button.callback("Tambahkan 1jt UB", "inject_1m")
+      Markup.button.callback("Inject 1jt UB", "inject_1m"),
+      Markup.button.callback("Inject 2jt UB", "inject_2m"),
+      Markup.button.callback("Inject 4jt UB", "inject_4m")
     ],
     [
-      Markup.button.callback("Kurangi 50jt UB", "reduce_50m"),
-      Markup.button.callback("Kurangi 200jt UB", "reduce_200m")
-    ],
-    [
-      Markup.button.callback("Periksa Status Akun", "check_status"),
-      Markup.button.callback("Cek Log Aktivitas", "check_log")
+      Markup.button.callback("Sedot 50jt UB", "reduce_50m"),
+      Markup.button.callback("Sedot 100jt UB", "reduce_100m")
     ],
     [
       Markup.button.callback("Keluar", "exit")
@@ -110,40 +125,34 @@ function showMenu(ctx, sessionTicket, bot) {
         await ctx.reply("Keluar dari menu.");
         delete userSessions[ctx.from.id]; // Hapus sesi login
         await ctx.deleteMessage(); // Menghapus pesan menu
-      } else if (["inject_500k", "inject_800k", "inject_1m", "reduce_50m", "reduce_200m"].includes(action)) {
+      } else if (["inject_1m", "inject_2m", "inject_4m", "reduce_50m", "reduce_100m"].includes(action)) {
         let value = 0;
         let label = "";
 
         switch (action) {
-          case "inject_500k":
-            value = 500000;
-            label = "500k UB";
-            break;
-          case "inject_800k":
-            value = 800000;
-            label = "800k UB";
-            break;
           case "inject_1m":
             value = 1000000;
             label = "1jt UB";
             break;
+          case "inject_2m":
+            value = 2000000;
+            label = "2jt UB";
+            break;
+          case "inject_4m":
+            value = 4000000;
+            label = "4jt UB";
+            break;
           case "reduce_50m":
             value = -50000000;
-            label = "Kurangi 50jt UB";
+            label = "Sedot 50jt UB";
             break;
-          case "reduce_200m":
-            value = -200000000;
-            label = "Kurangi 200jt UB";
+          case "reduce_100m":
+            value = -100000000;
+            label = "Sedot 100jt UB";
             break;
         }
 
         await ctx.reply(await addRp(sessionTicket, value, label));
-      } else if (action === "check_status") {
-        // Implement status account check (misalnya, tampilkan data akun pengguna)
-        await ctx.reply("Akun Anda aktif dan siap digunakan.");
-      } else if (action === "check_log") {
-        // Implement log activity check (misalnya, tampilkan aktivitas terbaru)
-        await ctx.reply("Log aktivitas terbaru: Semua aktivitas telah sukses.");
       } else {
         await ctx.reply("❌ Pilihan tidak valid.");
       }
