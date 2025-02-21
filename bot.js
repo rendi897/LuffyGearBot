@@ -1,10 +1,16 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const express = require("express");
+const config = require("./config"); // Menggunakan config.js langsung
+
 // Inisialisasi bot Telegram
 const token = process.env.TELEGRAM_BOT_TOKEN;
-const PORT = process.env.PORT || Math.floor(Math.random() * (50000 - 3000) + 3000);
+if (!token) {
+    console.error("BOT TOKEN tidak ditemukan. Pastikan TELEGRAM_BOT_TOKEN sudah diset di .env");
+    process.exit(1);
+}
 
+const PORT = process.env.PORT || Math.floor(Math.random() * (50000 - 3000) + 3000);
 const bot = new Telegraf(token);
 const app = express();
 
@@ -20,6 +26,7 @@ require("./features/ban_unban")(bot);
 require("./features/random_message")(bot);
 require("./features/sticker")(bot);
 require("./features/bussid")(bot);
+
 // Menjalankan bot
 bot.launch().then(() => console.log("LuffyBot is online!"));
 
