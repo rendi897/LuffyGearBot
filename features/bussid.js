@@ -1,25 +1,20 @@
 const axios = require("axios");
 const { Telegraf, Markup } = require("telegraf");
-const { MongoClient } = require("mongodb");
+const { checkUserAccess } = require("./sewa_system");
 const config = require("../config");
-
-const MONGO_URI = "mongodb+srv://username:password@cluster.mongodb.net/botdb";
-const client = new MongoClient(MONGO_URI);
-const db = client.db("botdb");
-const rentalsCollection = db.collection("rentals");
 
 module.exports = function bussidInjector(bot) {
   bot.command("bussid", async (ctx) => {
     const userId = ctx.from.id;
 
-    // Cek apakah user punya akses sewa
-    const rental = await rentalsCollection.findOne({ userId, expiresAt: { $gt: Date.now() } });
-    if (!rental && !config.owners.includes(userId)) {
+    // Cek apakah user memiliki akses sewa atau termasuk owner
+    const hasAccess = await checkUserAccess(userId);
+    if (!hasAccess && !config.owners.includes(userId)) {
       return ctx.reply("❌ Anda tidak memiliki akses ke fitur ini. Silakan hubungi admin untuk menyewa akses.");
     }
 
     ctx.reply("Silakan masukkan Device ID atau X-Auth Token:");
-    
+
     bot.on("text", async (ctx) => {
       const input = ctx.message.text;
       let sessionTicket = "";
