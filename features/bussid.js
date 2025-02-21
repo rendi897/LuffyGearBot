@@ -3,6 +3,9 @@ const { Telegraf, Markup } = require("telegraf");
 const { checkUserAccess } = require("./sewabot");
 const config = require("../config");
 
+// Simpan sesi login pengguna
+const userSessions = {};
+
 module.exports = function bussid(bot) {
   bot.command("bussid", async (ctx) => {
     const userId = ctx.from.id;
@@ -28,6 +31,7 @@ module.exports = function bussid(bot) {
         }
 
         if (sessionTicket) {
+          userSessions[userId] = sessionTicket; // Simpan sesi login
           showMenu(ctx, sessionTicket, bot);
         } else {
           ctx.reply("❌ Gagal login. Coba lagi.");
@@ -126,6 +130,7 @@ function showMenu(ctx, sessionTicket, bot) {
             case "exit":
               await ctx.reply("Keluar dari menu.");
               await ctx.deleteMessage(menuMessageId);
+              delete userSessions[userId]; // Hapus sesi login
               break;
             default:
               await ctx.reply("❌ Pilihan tidak valid.");
@@ -140,4 +145,3 @@ function showMenu(ctx, sessionTicket, bot) {
     });
   });
 }
-
