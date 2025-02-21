@@ -1,6 +1,6 @@
-module.exports = (bot) => {
-    const OWNER_ID = process.env.OWNER_ID; // ID pemilik bot dari .env
+const config = require("../config"); // Import config.js
 
+module.exports = (bot) => {
     bot.command("mute", async (ctx) => {
         if (!(await isAdmin(ctx))) return;
 
@@ -10,13 +10,14 @@ module.exports = (bot) => {
         }
 
         const userId = ctx.message.reply_to_message.from.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
 
-        if (userId == OWNER_ID) {
+        if (config.owners.includes(userId)) {
             return ctx.reply("❌ Kamu tidak bisa mute pemilik bot!");
         }
 
         const isTargetAdmin = await isAdminById(ctx, userId);
-        if (isTargetAdmin && ctx.message.from.id != OWNER_ID) {
+        if (isTargetAdmin && !config.owners.includes(ctx.message.from.id)) {
             return ctx.reply("❌ Kamu tidak bisa mute admin lain, hanya pemilik bot yang bisa melakukannya!");
         }
 
@@ -33,24 +34,15 @@ module.exports = (bot) => {
 
         try {
             await ctx.restrictChatMember(userId, {
-                permissions: {
-                    can_send_messages: false,
-                    can_send_media_messages: false,
-                    can_send_polls: false,
-                    can_send_other_messages: false,
-                    can_add_web_page_previews: false,
-                    can_invite_users: false,
-                    can_pin_messages: false,
-                },
+                permissions: { can_send_messages: false },
                 until_date: untilDate,
             });
 
-            ctx.reply(`🔇 User ${ctx.message.reply_to_message.from.first_name} telah di-mute selama ${args[0]}!`);
+            ctx.reply(`🔇 User *${userName}* telah di-mute selama ${args[0]}!`, { parse_mode: "Markdown" });
         } catch (error) {
             console.error(error);
             ctx.reply("❌ Gagal melakukan mute user.");
         }
-        
     });
 
     bot.command("unmute", async (ctx) => {
@@ -61,6 +53,7 @@ module.exports = (bot) => {
         }
 
         const userId = ctx.message.reply_to_message.from.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
 
         try {
             await ctx.restrictChatMember(userId, {
@@ -72,19 +65,18 @@ module.exports = (bot) => {
                     can_add_web_page_previews: true,
                     can_invite_users: true,
                     can_pin_messages: false,
-                }
+                },
             });
 
-            ctx.reply(`🔊 User ${ctx.message.reply_to_message.from.first_name} telah di-unmute lebih awal!`);
+            ctx.reply(`🔊 User *${userName}* telah di-unmute lebih awal!`, { parse_mode: "Markdown" });
         } catch (error) {
             console.error(error);
             ctx.reply("❌ Gagal melakukan unmute user.");
         }
-        
     });
 
     bot.command("unadmin", async (ctx) => {
-        if (ctx.message.from.id != OWNER_ID) {
+        if (!config.owners.includes(ctx.message.from.id)) {
             return ctx.reply("❌ Hanya pemilik bot yang bisa menurunkan admin!");
         }
 
@@ -93,6 +85,7 @@ module.exports = (bot) => {
         }
 
         const userId = ctx.message.reply_to_message.from.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
         const isTargetAdmin = await isAdminById(ctx, userId);
 
         if (!isTargetAdmin) {
@@ -109,12 +102,11 @@ module.exports = (bot) => {
                 can_promote_members: false,
             });
 
-            ctx.reply(`⏬ User ${ctx.message.reply_to_message.from.first_name} telah diturunkan menjadi anggota biasa!`);
+            ctx.reply(`⏬ User *${userName}* telah diturunkan menjadi anggota biasa!`, { parse_mode: "Markdown" });
         } catch (error) {
             console.error(error);
             ctx.reply("❌ Gagal menurunkan admin.");
         }
-        
     });
 
     function parseDuration(input) {
@@ -146,5 +138,4 @@ module.exports = (bot) => {
         const chatAdmins = await ctx.getChatAdministrators();
         return chatAdmins.some(admin => admin.user.id === userId);
     }
-    
 };
