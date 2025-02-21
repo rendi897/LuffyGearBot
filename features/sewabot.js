@@ -15,8 +15,7 @@ async function connectDB() {
   }
 }
 
-connectDB();
-
+// Pastikan database terkoneksi sebelum menjalankan logika lainnya
 async function checkUserAccess(userId) {
   const rental = await rentalsCollection.findOne({ userId, expiresAt: { $gt: Date.now() } });
   return rental ? true : false;
@@ -47,6 +46,7 @@ async function removeRental(ownerId, userId) {
 }
 
 module.exports = {
+  connectDB,
   checkUserAccess,
   addRental,
   removeRental
