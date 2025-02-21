@@ -1,7 +1,7 @@
 const { MongoClient } = require("mongodb");
 const config = require("../config");
 
-const MONGO_URI = "mongodb+srv://username:password@cluster.mongodb.net/botdb";
+const MONGO_URI = "mongodb+srv://REXBASE:Rendi2003@cluster.mongodb.net/botdb";
 const client = new MongoClient(MONGO_URI);
 const db = client.db("botdb");
 const rentalsCollection = db.collection("rentals");
