@@ -1,30 +1,10 @@
-const { MongoClient } = require("mongodb");
 const config = require("../config");
-
-// Ganti dengan connection string MongoDB Atlas Anda
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://REXBASE:Rendi2003@cluster0.qa066.mongodb.net/botdb?retryWrites=true&w=majority&appName=Cluster0";
-
-const client = new MongoClient(MONGO_URI, {
-  tls: true, // Aktifkan TLS
-  tlsAllowInvalidCertificates: false, // Jangan izinkan sertifikat yang tidak valid
-});
-
-const db = client.db("botdb");
-const rentalsCollection = db.collection("rentals");
-
-// Fungsi untuk menghubungkan ke MongoDB
-async function connectDB() {
-  try {
-    await client.connect();
-    console.log("✅ Terhubung ke MongoDB");
-  } catch (error) {
-    console.error("❌ Gagal terhubung ke MongoDB:", error);
-  }
-}
+const { getRentalsCollection } = require("../utils/db");
 
 // Fungsi untuk memeriksa akses user
 async function checkUserAccess(userId) {
   try {
+    const rentalsCollection = getRentalsCollection();
     const rental = await rentalsCollection.findOne({ userId, expiresAt: { $gt: Date.now() } });
     return rental ? true : false;
   } catch (error) {
@@ -40,6 +20,7 @@ async function addRental(ownerId, userId, durationDays) {
   }
 
   try {
+    const rentalsCollection = getRentalsCollection();
     const expiresAt = Date.now() + durationDays * 24 * 60 * 60 * 1000;
     await rentalsCollection.updateOne(
       { userId },
@@ -60,6 +41,7 @@ async function removeRental(ownerId, userId) {
   }
 
   try {
+    const rentalsCollection = getRentalsCollection();
     await rentalsCollection.deleteOne({ userId });
     return `✅ Akses user ${userId} telah dihapus.`;
   } catch (error) {
@@ -109,9 +91,8 @@ function initSewabot(bot) {
 }
 
 module.exports = {
-  connectDB,
   checkUserAccess,
   addRental,
   removeRental,
-  initSewabot // Ekspor fungsi initSewabot
+  initSewabot, // Ekspor fungsi initSewabot
 };
