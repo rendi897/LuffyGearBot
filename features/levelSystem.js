@@ -98,7 +98,7 @@ async function deductDiamond(userId, diamondToDeduct) {
 
 // Command untuk mengecek level dan diamond
 function setupLevelCommands(bot) {
-  bot.command("level", async (ctx) => {
+  bot.command("stat", async (ctx) => {
     const userId = ctx.from.id;
     const level = await getLevel(userId);
     const exp = await getExp(userId);
@@ -108,7 +108,7 @@ function setupLevelCommands(bot) {
   });
 
   // Command untuk menambah diamond (hanya admin atau owner)
-  bot.command("adddiamond", async (ctx) => {
+  bot.command("isidm", async (ctx) => {
     const userId = ctx.from.id;
 
     // Cek apakah user adalah admin atau owner
@@ -121,7 +121,7 @@ function setupLevelCommands(bot) {
 
     const args = ctx.message.text.split(" ");
     if (args.length < 3) {
-      return ctx.reply("❌ Format: /adddiamond <user_id> <jumlah_diamond>");
+      return ctx.reply("❌ Format: /isidm <user_id> <jumlah_diamond>");
     }
 
     const targetUserId = parseInt(args[1]);
