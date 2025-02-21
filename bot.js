@@ -32,12 +32,7 @@ connectDB().then(() => {
   require("./features/sticker")(bot);
   require("./features/bussid")(bot);
   initSewabot(bot); // Inisialisasi fitur sewabot
-
-    // Tambahkan di bot.js atau file fitur lainnya
-bot.command("myid", (ctx) => {
-  const userId = ctx.from.id;
-  ctx.reply(`User ID Anda adalah: ${userId}`);
-});
+  require("./features/levelSystem").setupLevelCommands(bot);
 
   // Menjalankan bot
   bot.launch().then(() => console.log("LuffyBot is online!"));
