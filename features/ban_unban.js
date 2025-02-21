@@ -1,6 +1,6 @@
-module.exports = (bot) => {
-    const OWNER_ID = process.env.OWNER_ID; // ID pemilik bot dari .env
+const config = require("../config"); // Import konfigurasi
 
+module.exports = (bot) => {
     bot.command("ban", async (ctx) => {
         if (!(await isAdmin(ctx))) return;
 
@@ -9,19 +9,24 @@ module.exports = (bot) => {
         }
 
         const userId = ctx.message.reply_to_message.from.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
 
-        if (userId == OWNER_ID) {
+        if (config.owners.includes(userId)) {
             return ctx.reply("❌ Kamu tidak bisa ban pemilik bot!");
         }
 
+        if (userId === ctx.botInfo.id) {
+            return ctx.reply("❌ Aku tidak bisa ban diriku sendiri!");
+        }
+
         const isTargetAdmin = await isAdminById(ctx, userId);
-        if (isTargetAdmin && ctx.message.from.id != OWNER_ID) {
+        if (isTargetAdmin && !config.owners.includes(ctx.message.from.id)) {
             return ctx.reply("❌ Kamu tidak bisa ban admin lain, hanya pemilik bot yang bisa melakukannya!");
         }
 
         try {
             await ctx.kickChatMember(userId);
-            ctx.reply(`🚫 User ${ctx.message.reply_to_message.from.first_name} telah di-ban!`);
+            ctx.reply(`🚫 User *${userName}* telah di-ban dari grup!`, { parse_mode: "Markdown" });
         } catch (error) {
             console.error(error);
             ctx.reply("❌ Gagal melakukan ban user.");
@@ -36,15 +41,15 @@ module.exports = (bot) => {
         }
 
         const userId = ctx.message.reply_to_message.from.id;
+        const userName = ctx.message.reply_to_message.from.first_name;
 
         try {
             await ctx.unbanChatMember(userId);
-            ctx.reply(`✅ User ${ctx.message.reply_to_message.from.first_name} telah di-unban!`);
+            ctx.reply(`✅ User *${userName}* telah di-unban!`, { parse_mode: "Markdown" });
         } catch (error) {
             console.error(error);
             ctx.reply("❌ Gagal melakukan unban user.");
         }
-        
     });
 
     async function isAdmin(ctx) {
@@ -62,5 +67,4 @@ module.exports = (bot) => {
         const chatAdmins = await ctx.getChatAdministrators();
         return chatAdmins.some(admin => admin.user.id === userId);
     }
-    
 };
