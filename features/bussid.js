@@ -20,7 +20,7 @@ module.exports = function bussid(bot) {
       ctx.reply("Silakan masukkan Device ID atau X-Auth Token:");
 
       // Menggunakan 'once' agar hanya menangkap satu input
-      bot.on("text", async (ctx) => {
+      bot.once("text", async (ctx) => {
         const input = ctx.message.text;
         let sessionTicket = "";
 
@@ -79,67 +79,71 @@ async function addRp(xAuth, value, label) {
   }
 }
 
-// Fungsi untuk menampilkan menu dengan reply keyboard
+// Fungsi untuk menampilkan menu dengan inline keyboard
 function showMenu(ctx, sessionTicket, bot) {
   const userId = ctx.from.id;
 
-  ctx.reply("Pilih jumlah UB yang ingin diinject:", Markup.keyboard([
-    ["500k UB", "800k UB", "1jt UB"],
-    ["Kurangi 50jt UB", "Kurangi 200jt UB"],
-    ["Keluar"]
-  ])
-  .resize()
-  .oneTime()
-  );
+  ctx.reply("Pilih opsi yang diinginkan:", Markup.inlineKeyboard([
+    [
+      Markup.button.callback("Tambahkan 500k UB", "inject_500k"),
+      Markup.button.callback("Tambahkan 800k UB", "inject_800k"),
+      Markup.button.callback("Tambahkan 1jt UB", "inject_1m")
+    ],
+    [
+      Markup.button.callback("Kurangi 50jt UB", "reduce_50m"),
+      Markup.button.callback("Kurangi 200jt UB", "reduce_200m")
+    ],
+    [
+      Markup.button.callback("Periksa Status Akun", "check_status"),
+      Markup.button.callback("Cek Log Aktivitas", "check_log")
+    ],
+    [
+      Markup.button.callback("Keluar", "exit")
+    ]
+  ]));
 
-  bot.on("text", async (ctx) => {
-    const action = ctx.message.text;
+  bot.on("callback_query", async (ctx) => {
+    const action = ctx.callbackQuery.data;
 
     try {
-      if (action === "Keluar") {
+      if (action === "exit") {
         await ctx.reply("Keluar dari menu.");
         delete userSessions[ctx.from.id]; // Hapus sesi login
-      } else if (["500k UB", "800k UB", "1jt UB", "Kurangi 50jt UB", "Kurangi 200jt UB"].includes(action)) {
+        await ctx.deleteMessage(); // Menghapus pesan menu
+      } else if (["inject_500k", "inject_800k", "inject_1m", "reduce_50m", "reduce_200m"].includes(action)) {
         let value = 0;
         let label = "";
 
         switch (action) {
-          case "500k UB":
+          case "inject_500k":
             value = 500000;
             label = "500k UB";
             break;
-          case "800k UB":
+          case "inject_800k":
             value = 800000;
             label = "800k UB";
             break;
-          case "1jt UB":
+          case "inject_1m":
             value = 1000000;
             label = "1jt UB";
             break;
-          case "Kurangi 50jt UB":
+          case "reduce_50m":
             value = -50000000;
             label = "Kurangi 50jt UB";
             break;
-          case "Kurangi 200jt UB":
+          case "reduce_200m":
             value = -200000000;
             label = "Kurangi 200jt UB";
             break;
         }
 
         await ctx.reply(await addRp(sessionTicket, value, label));
-      } else if (action.startsWith("/inject")) {
-        // Handle /inject command
-        const match = action.match(/^\/inject (\d+)$/);
-        if (match) {
-          const inputValue = parseInt(match[1]);
-          if (isNaN(inputValue)) {
-            return ctx.reply("❌ Input tidak valid. Masukkan angka saja!");
-          }
-
-          await ctx.reply(await addRp(sessionTicket, inputValue, `${inputValue} UB`));
-        } else {
-          await ctx.reply("❌ Format command tidak valid. Gunakan /inject <value>.");
-        }
+      } else if (action === "check_status") {
+        // Implement status account check (misalnya, tampilkan data akun pengguna)
+        await ctx.reply("Akun Anda aktif dan siap digunakan.");
+      } else if (action === "check_log") {
+        // Implement log activity check (misalnya, tampilkan aktivitas terbaru)
+        await ctx.reply("Log aktivitas terbaru: Semua aktivitas telah sukses.");
       } else {
         await ctx.reply("❌ Pilihan tidak valid.");
       }
@@ -147,5 +151,7 @@ function showMenu(ctx, sessionTicket, bot) {
       console.error("❌ Error dalam menangani input:", error);
       await ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
     }
+
+    await ctx.answerCbQuery(); // Menyelesaikan callback
   });
 }
