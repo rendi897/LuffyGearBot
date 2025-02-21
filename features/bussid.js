@@ -8,33 +8,39 @@ module.exports = function bussid(bot) {
     const userId = ctx.from.id;
 
     // Cek apakah user memiliki akses sewa atau termasuk owner
-    const hasAccess = await checkUserAccess(userId);
-    if (!hasAccess && !config.owners.includes(userId)) {
-      return ctx.reply("❌ Anda tidak memiliki akses ke fitur ini. Silakan hubungi admin untuk menyewa akses.");
+    try {
+      const hasAccess = await checkUserAccess(userId);
+      if (!hasAccess && !config.owners.includes(userId)) {
+        return ctx.reply("❌ Anda tidak memiliki akses ke fitur ini. Silakan hubungi admin untuk menyewa akses.");
+      }
+
+      ctx.reply("Silakan masukkan Device ID atau X-Auth Token:");
+
+      // Menggunakan 'once' agar hanya menangkap satu input
+      bot.once("text", async (ctx) => {
+        const input = ctx.message.text;
+        let sessionTicket = "";
+
+        if (input.startsWith("AUTH-")) {
+          sessionTicket = input;
+        } else {
+          sessionTicket = await loginWithDevice(input);
+        }
+
+        if (sessionTicket) {
+          showMenu(ctx, sessionTicket, bot);
+        } else {
+          ctx.reply("❌ Gagal login. Coba lagi.");
+        }
+      });
+    } catch (error) {
+      console.error("❌ Error dalam command bussid:", error);
+      ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
     }
-
-    ctx.reply("Silakan masukkan Device ID atau X-Auth Token:");
-
-    // Menggunakan 'once' agar hanya menangkap satu input
-    bot.once("text", async (ctx) => {
-      const input = ctx.message.text;
-      let sessionTicket = "";
-
-      if (input.startsWith("AUTH-")) {
-        sessionTicket = input;
-      } else {
-        sessionTicket = await loginWithDevice(input);
-      }
-
-      if (sessionTicket) {
-        showMenu(ctx, sessionTicket, bot);
-      } else {
-        ctx.reply("❌ Gagal login. Coba lagi.");
-      }
-    });
   });
 };
 
+// Fungsi untuk login dengan Device ID
 async function loginWithDevice(deviceId) {
   try {
     const response = await axios.post("https://4ae9.playfabapi.com/Client/LoginWithAndroidDeviceID", {
@@ -47,11 +53,12 @@ async function loginWithDevice(deviceId) {
     });
     return response.data.data?.SessionTicket || null;
   } catch (error) {
-    console.error(error);
+    console.error("❌ Gagal login dengan Device ID:", error);
     return null;
   }
 }
 
+// Fungsi untuk menambah atau mengurangi RP (Resource Points)
 async function addRp(xAuth, value, label) {
   try {
     await axios.post("https://4ae9.playfabapi.com/Client/ExecuteCloudScript", {
@@ -63,11 +70,12 @@ async function addRp(xAuth, value, label) {
 
     return `✅ Inject ${label} berhasil!`;
   } catch (error) {
-    console.error(error);
+    console.error("❌ Gagal inject RP:", error);
     return `❌ Gagal inject ${label}. Coba lagi nanti.`;
   }
 }
 
+// Fungsi untuk menampilkan menu
 function showMenu(ctx, sessionTicket, bot) {
   const userId = ctx.from.id;
 
@@ -124,7 +132,7 @@ function showMenu(ctx, sessionTicket, bot) {
           }
         }
       } catch (error) {
-        console.error(error);
+        console.error("❌ Error dalam callback query:", error);
         await ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
       }
 
