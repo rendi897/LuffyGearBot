@@ -131,33 +131,6 @@ async function getDiamond(userId) {
   }
 }
 
-// Fungsi untuk mengurangi diamond
-async function deductDiamond(userId, diamondToDeduct) {
-  const db = getDB();
-  const usersCollection = db.collection("users");
-
-  try {
-    const user = await usersCollection.findOne({ userId });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (user.diamond < diamondToDeduct) {
-      throw new Error("Diamond tidak cukup");
-    }
-
-    const updatedDiamond = user.diamond - diamondToDeduct;
-    await usersCollection.updateOne({ userId }, { $set: { diamond: updatedDiamond } });
-
-    console.log(`[deductDiamond] Diamond deducted from user ${userId}. New diamond: ${updatedDiamond}`); // Logging
-    return updatedDiamond;
-  } catch (error) {
-    console.error("[deductDiamond] Error:", error);
-    throw new Error("Failed to deduct diamond");
-  }
-}
-
 // Command untuk mengecek level dan diamond
 function setupLevelCommands(bot) {
   // Event listener untuk setiap pesan yang dikirim
@@ -239,6 +212,5 @@ module.exports = {
   getExp,
   addDiamond,
   getDiamond,
-  deductDiamond,
   setupLevelCommands,
 };
