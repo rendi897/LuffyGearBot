@@ -1,8 +1,8 @@
 const { getDB } = require("../utils/db");
 const config = require("../config"); // Import config.js
 
-// Fungsi untuk menambah exp
-async function addExp(userId, username, expToAdd) {
+// Fungsi untuk mendaftarkan pengguna secara otomatis
+async function registerUser(userId, username) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
@@ -17,6 +17,20 @@ async function addExp(userId, username, expToAdd) {
       diamond: 0,
     };
     await usersCollection.insertOne(user);
+  }
+
+  return user;
+}
+
+// Fungsi untuk menambah exp
+async function addExp(userId, expToAdd) {
+  const db = getDB();
+  const usersCollection = db.collection("users");
+
+  let user = await usersCollection.findOne({ userId });
+
+  if (!user) {
+    throw new Error("User not found");
   }
 
   user.exp += expToAdd;
@@ -54,7 +68,7 @@ async function addDiamond(userId, diamondToAdd) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  const user = await usersCollection.findOne({ userId });
+  let user = await usersCollection.findOne({ userId });
 
   if (!user) {
     throw new Error("User not found");
@@ -98,6 +112,18 @@ async function deductDiamond(userId, diamondToDeduct) {
 
 // Command untuk mengecek level dan diamond
 function setupLevelCommands(bot) {
+  // Event listener untuk setiap pesan yang dikirim
+  bot.on("message", async (ctx) => {
+    const userId = ctx.from.id;
+    const username = ctx.from.username || ctx.from.first_name;
+
+    // Mendaftarkan pengguna secara otomatis
+    await registerUser(userId, username);
+
+    // Menambahkan exp setiap kali pengguna mengirim pesan
+    await addExp(userId, 5); // Tambahkan 5 exp setiap pesan
+  });
+
   bot.command("stat", async (ctx) => {
     const userId = ctx.from.id;
     const level = await getLevel(userId);
@@ -147,6 +173,7 @@ function setupLevelCommands(bot) {
 }
 
 module.exports = {
+  registerUser,
   addExp,
   getLevel,
   getExp,
