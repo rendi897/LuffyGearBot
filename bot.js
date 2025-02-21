@@ -1,7 +1,8 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const express = require("express");
-const config = require("./config"); // Menggunakan config.js langsung
+const { connectDB, initSewabot } = require("./features/sewabot"); // Import fungsi connectDB dan initSewabot
+const config = require("./config");
 
 // Inisialisasi bot Telegram
 const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -10,7 +11,7 @@ if (!token) {
     process.exit(1);
 }
 
-const PORT = process.env.PORT || Math.floor(Math.random() * (50000 - 3000) + 3000);
+const PORT = process.env.PORT || 3000;
 const bot = new Telegraf(token);
 const app = express();
 
@@ -18,18 +19,23 @@ const app = express();
 app.get("/", (req, res) => res.send("LuffyBot is running!"));
 app.listen(PORT, () => console.log(`Express server running on port ${PORT}`));
 
-// Load fitur bot
-require("./features/welcome_exit")(bot);
-require("./features/mute_unmute")(bot);
-require("./features/kick_user")(bot);
-require("./features/ban_unban")(bot);
-require("./features/random_message")(bot);
-require("./features/sticker")(bot);
-require("./features/bussid")(bot);
-require("./features/sewabot")(bot);
+// Hubungkan ke MongoDB sebelum menjalankan bot
+connectDB().then(() => {
+  console.log("✅ MongoDB connected, loading bot features...");
 
-// Menjalankan bot
-bot.launch().then(() => console.log("LuffyBot is online!"));
+  // Load fitur bot
+  require("./features/welcome_exit")(bot);
+  require("./features/mute_unmute")(bot);
+  require("./features/kick_user")(bot);
+  require("./features/ban_unban")(bot);
+  require("./features/random_message")(bot);
+  require("./features/sticker")(bot);
+  require("./features/bussid")(bot);
+  initSewabot(bot); // Inisialisasi fitur sewabot
+
+  // Menjalankan bot
+  bot.launch().then(() => console.log("LuffyBot is online!"));
+});
 
 // Graceful shutdown
 process.once("SIGINT", () => bot.stop("SIGINT"));
