@@ -17,9 +17,47 @@ async function connectDB() {
     await client.connect();
     db = client.db("botdb"); // Ganti dengan nama database Anda
     console.log("✅ Terhubung ke MongoDB");
+
+    // Buat koleksi 'users' dan 'rentals' jika belum ada
+    await createUsersCollection();
+    await createRentalsCollection();
   } catch (error) {
     console.error("❌ Gagal terhubung ke MongoDB:", error);
     process.exit(1); // Keluar dari proses jika gagal terhubung
+  }
+}
+
+// Fungsi untuk membuat koleksi 'users' jika belum ada
+async function createUsersCollection() {
+  try {
+    const collections = await db.listCollections().toArray();
+    const usersCollectionExists = collections.some((col) => col.name === "users");
+
+    if (!usersCollectionExists) {
+      await db.createCollection("users");
+      console.log("✅ Koleksi 'users' berhasil dibuat.");
+    } else {
+      console.log("✅ Koleksi 'users' sudah ada.");
+    }
+  } catch (error) {
+    console.error("❌ Gagal membuat koleksi 'users':", error);
+  }
+}
+
+// Fungsi untuk membuat koleksi 'rentals' jika belum ada
+async function createRentalsCollection() {
+  try {
+    const collections = await db.listCollections().toArray();
+    const rentalsCollectionExists = collections.some((col) => col.name === "rentals");
+
+    if (!rentalsCollectionExists) {
+      await db.createCollection("rentals");
+      console.log("✅ Koleksi 'rentals' berhasil dibuat.");
+    } else {
+      console.log("✅ Koleksi 'rentals' sudah ada.");
+    }
+  } catch (error) {
+    console.error("❌ Gagal membuat koleksi 'rentals':", error);
   }
 }
 
@@ -31,14 +69,14 @@ function getDB() {
   return db;
 }
 
-// Fungsi untuk mendapatkan koleksi rentals
-function getRentalsCollection() {
-  return getDB().collection("rentals");
-}
-
 // Fungsi untuk mendapatkan koleksi users
 function getUsersCollection() {
   return getDB().collection("users");
+}
+
+// Fungsi untuk mendapatkan koleksi rentals
+function getRentalsCollection() {
+  return getDB().collection("rentals");
 }
 
 // Fungsi untuk menutup koneksi MongoDB
@@ -54,7 +92,7 @@ async function closeDB() {
 module.exports = {
   connectDB,
   getDB,
-  getRentalsCollection,
   getUsersCollection,
+  getRentalsCollection,
   closeDB,
 };
