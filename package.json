@@ -17,7 +17,8 @@
     "moment": "^2.29.1",
     "pg": "^8.11.1",
     "sharp": "^0.33.5",
-    "telegraf": "^4.12.2"
+    "telegraf": "^4.12.2",
+    "mongodb": "^5.6.0"
   },
   "engines": {
     "node": ">=16"
