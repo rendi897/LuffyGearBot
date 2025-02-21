@@ -79,69 +79,73 @@ async function addRp(xAuth, value, label) {
   }
 }
 
-// Fungsi untuk menampilkan menu
+// Fungsi untuk menampilkan menu dengan reply keyboard
 function showMenu(ctx, sessionTicket, bot) {
   const userId = ctx.from.id;
 
-  ctx.reply("Pilih jumlah UB yang ingin diinject:", Markup.inlineKeyboard([
-    [Markup.button.callback("500k UB", "inject_500k"), Markup.button.callback("800k UB", "inject_800k")],
-    [Markup.button.callback("1jt UB", "inject_1m"), Markup.button.callback("Kurangi 50jt UB", "reduce_50m")],
-    [Markup.button.callback("Kurangi 200jt UB", "reduce_200m")],
-    config.owners.includes(userId) ? [Markup.button.callback("Manual Input", "manual_input")] : [],
-    [Markup.button.callback("Keluar", "exit")]
-  ].filter(row => row.length > 0))).then((sentMessage) => {
-    const menuMessageId = sentMessage.message_id;
+  ctx.reply("Pilih jumlah UB yang ingin diinject:", Markup.keyboard([
+    ["500k UB", "800k UB", "1jt UB"],
+    ["Kurangi 50jt UB", "Kurangi 200jt UB"],
+    ["Keluar"]
+  ])
+  .resize()
+  .oneTime()
+  );
 
-    bot.on("callback_query", async (ctx) => {
-      const action = ctx.callbackQuery.data;
+  bot.on("text", async (ctx) => {
+    const action = ctx.message.text;
 
-      try {
-        if (action === "manual_input") {
-          if (!config.owners.includes(ctx.from.id)) {
-            return ctx.reply("❌ Anda tidak memiliki izin untuk menggunakan fitur ini.");
-          }
+    try {
+      if (action === "Keluar") {
+        await ctx.reply("Keluar dari menu.");
+        delete userSessions[ctx.from.id]; // Hapus sesi login
+      } else if (["500k UB", "800k UB", "1jt UB", "Kurangi 50jt UB", "Kurangi 200jt UB"].includes(action)) {
+        let value = 0;
+        let label = "";
 
-          ctx.reply("Masukkan jumlah UB yang ingin diinject:");
-          
-          // Menggunakan 'once' agar hanya menangkap satu input
-          bot.on("text", async (ctx) => {
-            const inputValue = parseInt(ctx.message.text);
-            if (isNaN(inputValue)) return ctx.reply("❌ Input tidak valid. Masukkan angka saja!");
-
-            await ctx.reply(await addRp(sessionTicket, inputValue, `${inputValue} UB`));
-          });
-        } else {
-          switch (action) {
-            case "inject_500k":
-              await ctx.reply(await addRp(sessionTicket, 500000, "500k UB"));
-              break;
-            case "inject_800k":
-              await ctx.reply(await addRp(sessionTicket, 800000, "800k UB"));
-              break;
-            case "inject_1m":
-              await ctx.reply(await addRp(sessionTicket, 1000000, "1jt UB"));
-              break;
-            case "reduce_50m":
-              await ctx.reply(await addRp(sessionTicket, -50000000, "Kurangi 50jt UB"));
-              break;
-            case "reduce_200m":
-              await ctx.reply(await addRp(sessionTicket, -200000000, "Kurangi 200jt UB"));
-              break;
-            case "exit":
-              await ctx.reply("Keluar dari menu.");
-              await ctx.deleteMessage(menuMessageId);
-              delete userSessions[userId]; // Hapus sesi login
-              break;
-            default:
-              await ctx.reply("❌ Pilihan tidak valid.");
-          }
+        switch (action) {
+          case "500k UB":
+            value = 500000;
+            label = "500k UB";
+            break;
+          case "800k UB":
+            value = 800000;
+            label = "800k UB";
+            break;
+          case "1jt UB":
+            value = 1000000;
+            label = "1jt UB";
+            break;
+          case "Kurangi 50jt UB":
+            value = -50000000;
+            label = "Kurangi 50jt UB";
+            break;
+          case "Kurangi 200jt UB":
+            value = -200000000;
+            label = "Kurangi 200jt UB";
+            break;
         }
-      } catch (error) {
-        console.error("❌ Error dalam callback query:", error);
-        await ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
-      }
 
-      await ctx.answerCbQuery();
-    });
+        await ctx.reply(await addRp(sessionTicket, value, label));
+      } else if (action.startsWith("/inject")) {
+        // Handle /inject command
+        const match = action.match(/^\/inject (\d+)$/);
+        if (match) {
+          const inputValue = parseInt(match[1]);
+          if (isNaN(inputValue)) {
+            return ctx.reply("❌ Input tidak valid. Masukkan angka saja!");
+          }
+
+          await ctx.reply(await addRp(sessionTicket, inputValue, `${inputValue} UB`));
+        } else {
+          await ctx.reply("❌ Format command tidak valid. Gunakan /inject <value>.");
+        }
+      } else {
+        await ctx.reply("❌ Pilihan tidak valid.");
+      }
+    } catch (error) {
+      console.error("❌ Error dalam menangani input:", error);
+      await ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
+    }
   });
 }
