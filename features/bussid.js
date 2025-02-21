@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { Telegraf, Markup } = require("telegraf");
-const { checkUserAccess } = require("./sewa_system");
+const { checkUserAccess } = require("./sewabot");
 const config = require("../config");
 
 module.exports = function bussidInjector(bot) {
