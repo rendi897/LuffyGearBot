@@ -1,3 +1,5 @@
+const config = require("../config"); // Ambil konfigurasi dari config.js
+
 const messages = [
     "こんにちは! (Konnichiwa!) Selamat siang, semuanya! ☀️",
     "Senpai, aku butuh bantuanmu! 😳",
@@ -50,15 +52,20 @@ const messages = [
 ];
 
 function getRandomInterval() {
-    // Interval acak antara 1 hingga 3 jam (1 - 3 jam)
     return Math.floor(Math.random() * (3 * 60 * 60 * 1000 - 1 * 60 * 60 * 1000 + 1)) + 1 * 60 * 60 * 1000;
 }
 
 function sendRandomMessage(bot) {
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-    const chatId = process.env.GROUP_ID; // ID grup tujuan dari .env
 
-    bot.telegram.sendMessage(chatId, randomMessage).catch(console.error);
+    if (!config.group_id.length) {
+        console.error("Daftar Group ID kosong di config.js");
+        return;
+    }
+
+    config.group_id.forEach((chatId) => {
+        bot.telegram.sendMessage(chatId, randomMessage).catch(console.error);
+    });
 
     setTimeout(() => sendRandomMessage(bot), getRandomInterval());
 }
