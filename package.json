@@ -1,0 +1,25 @@
+{
+  "name": "LUFFYBOT",
+  "version": "1.2.0",
+  "description": "LuffyGear v-1.2 with Level System and Cash Features",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "axios": "^1.0.0",
+    "cron": "^3.0.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "moment": "^2.29.1",
+    "pg": "^8.11.1",
+    "sharp": "^0.33.5",
+    "telegraf": "^4.12.2",
+    "mongodb": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "author": "R3NZGG",
+  "license": "MIT"
+}
