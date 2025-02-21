@@ -1,4 +1,5 @@
 const { getDB } = require("../utils/db");
+const config = require("../config"); // Import config.js
 
 // Fungsi untuk menambah exp
 async function addExp(userId, username, expToAdd) {
@@ -95,4 +96,62 @@ async function deductDiamond(userId, diamondToDeduct) {
   return updatedDiamond;
 }
 
-module.exports = { addExp, getLevel, getExp, addDiamond, getDiamond, deductDiamond };
+// Command untuk mengecek level dan diamond
+function setupLevelCommands(bot) {
+  bot.command("level", async (ctx) => {
+    const userId = ctx.from.id;
+    const level = await getLevel(userId);
+    const exp = await getExp(userId);
+    const diamond = await getDiamond(userId);
+
+    ctx.reply(`Level: ${level}\nExp: ${exp}\n💎 Diamond: ${diamond}`);
+  });
+
+  // Command untuk menambah diamond (hanya admin atau owner)
+  bot.command("adddiamond", async (ctx) => {
+    const userId = ctx.from.id;
+
+    // Cek apakah user adalah admin atau owner
+    const isAdmin = config.admins.includes(userId);
+    const isOwner = config.owners.includes(userId);
+
+    if (!isAdmin && !isOwner) {
+      return ctx.reply("❌ Hanya admin atau owner yang bisa menggunakan command ini.");
+    }
+
+    const args = ctx.message.text.split(" ");
+    if (args.length < 3) {
+      return ctx.reply("❌ Format: /adddiamond <user_id> <jumlah_diamond>");
+    }
+
+    const targetUserId = parseInt(args[1]);
+    const diamondToAdd = parseInt(args[2]);
+
+    if (isNaN(targetUserId) || isNaN(diamondToAdd)) {
+      return ctx.reply("❌ User ID atau jumlah diamond tidak valid.");
+    }
+
+    try {
+      const newDiamond = await addDiamond(targetUserId, diamondToAdd);
+      ctx.reply(`✅ Berhasil menambahkan ${diamondToAdd} diamond ke user ${targetUserId}. Total diamond sekarang: ${newDiamond}`);
+    } catch (error) {
+      ctx.reply(`❌ Gagal menambahkan diamond: ${error.message}`);
+    }
+  });
+
+  // Command untuk mengecek user ID
+  bot.command("myid", (ctx) => {
+    const userId = ctx.from.id;
+    ctx.reply(`User ID Anda adalah: ${userId}`);
+  });
+}
+
+module.exports = {
+  addExp,
+  getLevel,
+  getExp,
+  addDiamond,
+  getDiamond,
+  deductDiamond,
+  setupLevelCommands, // Ekspor fungsi setupLevelCommands
+};
