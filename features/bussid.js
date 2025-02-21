@@ -15,7 +15,8 @@ module.exports = function bussidInjector(bot) {
 
     ctx.reply("Silakan masukkan Device ID atau X-Auth Token:");
 
-    bot.on("text", async (ctx) => {
+    // Menggunakan 'once' agar hanya menangkap satu input
+    bot.once("text", async (ctx) => {
       const input = ctx.message.text;
       let sessionTicket = "";
 
@@ -90,7 +91,8 @@ function showMenu(ctx, sessionTicket, bot) {
 
           ctx.reply("Masukkan jumlah UB yang ingin diinject:");
           
-          bot.on("text", async (ctx) => {
+          // Menggunakan 'once' agar hanya menangkap satu input
+          bot.once("text", async (ctx) => {
             const inputValue = parseInt(ctx.message.text);
             if (isNaN(inputValue)) return ctx.reply("❌ Input tidak valid. Masukkan angka saja!");
 
@@ -130,3 +132,4 @@ function showMenu(ctx, sessionTicket, bot) {
     });
   });
 }
+
