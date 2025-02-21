@@ -1,25 +1,30 @@
 const { getDB } = require("../utils/db");
-const config = require("../config"); // Import config.js
+const config = require("../config");
 
 // Fungsi untuk mendaftarkan pengguna secara otomatis
 async function registerUser(userId, username) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  let user = await usersCollection.findOne({ userId });
+  try {
+    let user = await usersCollection.findOne({ userId });
 
-  if (!user) {
-    user = {
-      userId,
-      username,
-      level: 1,
-      exp: 0,
-      diamond: 0,
-    };
-    await usersCollection.insertOne(user);
+    if (!user) {
+      user = {
+        userId,
+        username,
+        level: 1,
+        exp: 0,
+        diamond: 0,
+      };
+      await usersCollection.insertOne(user);
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error registering user:", error);
+    throw new Error("Failed to register user");
   }
-
-  return user;
 }
 
 // Fungsi untuk menambah exp
@@ -27,22 +32,27 @@ async function addExp(userId, expToAdd) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  let user = await usersCollection.findOne({ userId });
+  try {
+    let user = await usersCollection.findOne({ userId });
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.exp += expToAdd;
+
+    const expRequired = user.level * 100;
+    if (user.exp >= expRequired) {
+      user.level += 1;
+      user.exp = 0;
+    }
+
+    await usersCollection.updateOne({ userId }, { $set: user });
+    return user;
+  } catch (error) {
+    console.error("Error adding exp:", error);
+    throw new Error("Failed to add exp");
   }
-
-  user.exp += expToAdd;
-
-  const expRequired = user.level * 100;
-  if (user.exp >= expRequired) {
-    user.level += 1;
-    user.exp = 0;
-  }
-
-  await usersCollection.updateOne({ userId }, { $set: user });
-  return user;
 }
 
 // Fungsi untuk mengambil level
@@ -50,8 +60,13 @@ async function getLevel(userId) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  const user = await usersCollection.findOne({ userId });
-  return user ? user.level : 1;
+  try {
+    const user = await usersCollection.findOne({ userId });
+    return user ? user.level : 1;
+  } catch (error) {
+    console.error("Error getting level:", error);
+    throw new Error("Failed to get level");
+  }
 }
 
 // Fungsi untuk mengambil exp
@@ -59,8 +74,13 @@ async function getExp(userId) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  const user = await usersCollection.findOne({ userId });
-  return user ? user.exp : 0;
+  try {
+    const user = await usersCollection.findOne({ userId });
+    return user ? user.exp : 0;
+  } catch (error) {
+    console.error("Error getting exp:", error);
+    throw new Error("Failed to get exp");
+  }
 }
 
 // Fungsi untuk menambah diamond
@@ -68,16 +88,21 @@ async function addDiamond(userId, diamondToAdd) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  let user = await usersCollection.findOne({ userId });
+  try {
+    let user = await usersCollection.findOne({ userId });
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const updatedDiamond = (user.diamond || 0) + diamondToAdd;
+    await usersCollection.updateOne({ userId }, { $set: { diamond: updatedDiamond } });
+
+    return updatedDiamond;
+  } catch (error) {
+    console.error("Error adding diamond:", error);
+    throw new Error("Failed to add diamond");
   }
-
-  const updatedDiamond = (user.diamond || 0) + diamondToAdd;
-  await usersCollection.updateOne({ userId }, { $set: { diamond: updatedDiamond } });
-
-  return updatedDiamond;
 }
 
 // Fungsi untuk mengambil jumlah diamond
@@ -85,8 +110,13 @@ async function getDiamond(userId) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  const user = await usersCollection.findOne({ userId });
-  return user ? user.diamond : 0;
+  try {
+    const user = await usersCollection.findOne({ userId });
+    return user ? user.diamond : 0;
+  } catch (error) {
+    console.error("Error getting diamond:", error);
+    throw new Error("Failed to get diamond");
+  }
 }
 
 // Fungsi untuk mengurangi diamond
@@ -94,20 +124,25 @@ async function deductDiamond(userId, diamondToDeduct) {
   const db = getDB();
   const usersCollection = db.collection("users");
 
-  const user = await usersCollection.findOne({ userId });
+  try {
+    const user = await usersCollection.findOne({ userId });
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.diamond < diamondToDeduct) {
+      throw new Error("Diamond tidak cukup");
+    }
+
+    const updatedDiamond = user.diamond - diamondToDeduct;
+    await usersCollection.updateOne({ userId }, { $set: { diamond: updatedDiamond } });
+
+    return updatedDiamond;
+  } catch (error) {
+    console.error("Error deducting diamond:", error);
+    throw new Error("Failed to deduct diamond");
   }
-
-  if (user.diamond < diamondToDeduct) {
-    throw new Error("Diamond tidak cukup");
-  }
-
-  const updatedDiamond = user.diamond - diamondToDeduct;
-  await usersCollection.updateOne({ userId }, { $set: { diamond: updatedDiamond } });
-
-  return updatedDiamond;
 }
 
 // Command untuk mengecek level dan diamond
@@ -117,20 +152,29 @@ function setupLevelCommands(bot) {
     const userId = ctx.from.id;
     const username = ctx.from.username || ctx.from.first_name;
 
-    // Mendaftarkan pengguna secara otomatis
-    await registerUser(userId, username);
+    try {
+      // Mendaftarkan pengguna secara otomatis
+      await registerUser(userId, username);
 
-    // Menambahkan exp setiap kali pengguna mengirim pesan
-    await addExp(userId, 5); // Tambahkan 5 exp setiap pesan
+      // Menambahkan exp setiap kali pengguna mengirim pesan
+      await addExp(userId, 5); // Tambahkan 5 exp setiap pesan
+    } catch (error) {
+      console.error("Error handling message:", error);
+    }
   });
 
   bot.command("stat", async (ctx) => {
     const userId = ctx.from.id;
-    const level = await getLevel(userId);
-    const exp = await getExp(userId);
-    const diamond = await getDiamond(userId);
 
-    ctx.reply(`Level: ${level}\nExp: ${exp}\n💎 Diamond: ${diamond}`);
+    try {
+      const level = await getLevel(userId);
+      const exp = await getExp(userId);
+      const diamond = await getDiamond(userId);
+
+      ctx.reply(`Level: ${level}\nExp: ${exp}\n💎 Diamond: ${diamond}`);
+    } catch (error) {
+      ctx.reply("❌ Gagal mengambil statistik pengguna.");
+    }
   });
 
   // Command untuk menambah diamond (hanya admin atau owner)
@@ -180,5 +224,5 @@ module.exports = {
   addDiamond,
   getDiamond,
   deductDiamond,
-  setupLevelCommands, // Ekspor fungsi setupLevelCommands
+  setupLevelCommands,
 };
