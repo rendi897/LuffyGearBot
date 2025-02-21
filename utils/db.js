@@ -6,7 +6,7 @@ async function connectDB() {
   const client = new MongoClient(process.env.MONGO_URI);
   try {
     await client.connect();
-    db = client.db("botdb"); // Ganti dengan nama database Anda
+    db = client.db("luffybot"); // Ganti dengan nama database Anda
     console.log("✅ MongoDB connected");
   } catch (error) {
     console.error("❌ MongoDB connection error:", error);
