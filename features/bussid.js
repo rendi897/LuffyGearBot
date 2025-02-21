@@ -3,7 +3,7 @@ const { Telegraf, Markup } = require("telegraf");
 const { checkUserAccess } = require("./sewabot");
 const config = require("../config");
 
-module.exports = function bussidInjector(bot) {
+module.exports = function bussid(bot) {
   bot.command("bussid", async (ctx) => {
     const userId = ctx.from.id;
 
