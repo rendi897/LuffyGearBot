@@ -2,22 +2,11 @@ require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const express = require("express");
 const { connectDB, closeDB } = require("./utils/db");
-const config = require("./config");
 
-// Inisialisasi bot Telegram
-const token = process.env.TELEGRAM_BOT_TOKEN;
-if (!token) {
-  console.error("BOT TOKEN tidak ditemukan. Pastikan TELEGRAM_BOT_TOKEN sudah diset di .env");
-  process.exit(1);
-}
-
-const PORT = process.env.PORT || 3000;
-const bot = new Telegraf(token);
+// Inisialisasi bot
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 const app = express();
-
-// Express Server untuk menjaga bot tetap aktif
-app.get("/", (req, res) => res.send("LuffyBot is running!"));
-app.listen(PORT, () => console.log(`Express server running on port ${PORT}`));
+const PORT = process.env.PORT || 7777;
 
 // Middleware untuk logging
 bot.use((ctx, next) => {
@@ -33,51 +22,57 @@ bot.catch((err, ctx) => {
 
 // Command /myid
 bot.command("myid", (ctx) => {
-  const userId = ctx.from.id; // ID pengguna
-  const firstName = ctx.from.first_name; // Nama depan pengguna
-  const username = ctx.from.username || "Tidak ada username"; // Username (jika ada)
+  const userId = ctx.from.id;
+  const firstName = ctx.from.first_name;
+  const username = ctx.from.username || "Tidak ada username";
 
-  // Kirim balasan dengan informasi pengguna
   ctx.reply(`
 🆔 ID Anda: <code>${userId}</code>
 👤 Nama Depan: <code>${firstName}</code>
 🔖 Username: <code>${username}</code>
-  `, { parse_mode: "HTML" }); // Gunakan parse_mode HTML untuk formatting
+  `, { parse_mode: "HTML" });
 });
 
-// Hubungkan ke MongoDB sebelum menjalankan bot
+// Hubungkan ke MongoDB dan muat fitur
 connectDB()
   .then(() => {
     console.log("✅ MongoDB connected, loading bot features...");
 
-    // Load fitur bot secara dinamis
+    // Muat fitur secara dinamis
     const fs = require("fs");
     const path = require("path");
     const featuresDir = path.join(__dirname, "features");
+
     fs.readdirSync(featuresDir).forEach((file) => {
       if (file.endsWith(".js")) {
-        require(path.join(featuresDir, file))(bot);
-        console.log(`Loaded feature: ${file}`);
+        const featurePath = path.join(featuresDir, file);
+        const feature = require(featurePath);
+        feature(bot); // Panggil fungsi dengan parameter bot
+        console.log(`✅ Loaded feature: ${file}`);
       }
     });
 
-    // Menjalankan bot
-    bot.launch().then(() => console.log("LuffyBot is online!"));
+    // Jalankan bot
+    bot.launch().then(() => console.log("🤖 Bot is online!"));
   })
   .catch((error) => {
     console.error("❌ Gagal memuat bot:", error);
     process.exit(1);
   });
 
+// Express server untuk health check
+app.get("/", (req, res) => res.send("Bot is running!"));
+app.listen(PORT, () => console.log(`🌐 Express server running on port ${PORT}`));
+
 // Graceful shutdown
-process.once("SIGINT", async () => {
-  await bot.stop("SIGINT");
-  await closeDB();
+process.once("SIGINT", () => {
+  bot.stop("SIGINT");
+  closeDB();
   process.exit(0);
 });
 
-process.once("SIGTERM", async () => {
-  await bot.stop("SIGTERM");
-  await closeDB();
+process.once("SIGTERM", () => {
+  bot.stop("SIGTERM");
+  closeDB();
   process.exit(0);
 });
