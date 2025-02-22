@@ -6,7 +6,7 @@ const config = require("../config");
 // Simpan sesi login pengguna
 const userSessions = {};
 
-module.exports = function bussid(bot) {
+module.exports = function (bot) {
   bot.command("bussid", async (ctx) => {
     const userId = ctx.from.id;
 
