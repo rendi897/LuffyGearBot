@@ -1,4 +1,4 @@
-module.exports = function (bot) => {
+module.exports = function (bot) {
     const welcomeMessages = [
     "Sugoi {name}-kun! Kamu sekarang bagian dari grup ini! 🎌",
     "Bienvenido {name}! Selamat datang di sini! 🇪🇸",
