@@ -21,6 +21,11 @@ const app = express();
 app.get("/", (req, res) => res.send("LuffyBot is running!"));
 app.listen(PORT, () => console.log(`Express server running on port ${PORT}`));
 
+// Hubungkan ke MongoDB sebelum menjalankan bot
+connectDB()
+  .then(() => {
+    console.log("✅ MongoDB connected, loading bot features...");
+
     // Load fitur bot
     require("./features/welcome_exit")(bot); // Fitur welcome dan exit
     require("./features/mute_unmute")(bot); // Fitur mute dan unmute
