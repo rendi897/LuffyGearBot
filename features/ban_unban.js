@@ -1,6 +1,6 @@
 const config = require("../config"); // Import konfigurasi
 
-module.exports = (bot) => {
+module.exports = function (bot) => {
     bot.command("ban", async (ctx) => {
         if (!(await isAdmin(ctx))) return;
 
