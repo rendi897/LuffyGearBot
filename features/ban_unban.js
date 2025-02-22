@@ -1,6 +1,6 @@
 const config = require("../config"); // Import konfigurasi
 
-module.exports = function (bot) => {
+module.exports = function (bot) {
     bot.command("ban", async (ctx) => {
         if (!(await isAdmin(ctx))) return;
 
@@ -25,11 +25,11 @@ module.exports = function (bot) => {
         }
 
         try {
-            await ctx.kickChatMember(userId);
+            await ctx.banChatMember(userId); // Gunakan banChatMember, bukan kickChatMember
             ctx.reply(`🚫 User *${userName}* telah di-ban dari grup!`, { parse_mode: "Markdown" });
         } catch (error) {
-            console.error(error);
-            ctx.reply("❌ Gagal melakukan ban user.");
+            console.error("Error banning user:", error);
+            ctx.reply("❌ Gagal melakukan ban user. Pastikan bot memiliki izin untuk membanned user.");
         }
     });
 
@@ -47,24 +47,38 @@ module.exports = function (bot) => {
             await ctx.unbanChatMember(userId);
             ctx.reply(`✅ User *${userName}* telah di-unban!`, { parse_mode: "Markdown" });
         } catch (error) {
-            console.error(error);
-            ctx.reply("❌ Gagal melakukan unban user.");
+            console.error("Error unbanning user:", error);
+            ctx.reply("❌ Gagal melakukan unban user. Pastikan bot memiliki izin untuk unban user.");
         }
     });
 
+    // Fungsi untuk mengecek apakah pengguna adalah admin
     async function isAdmin(ctx) {
-        const chatAdmins = await ctx.getChatAdministrators();
-        const userId = ctx.message.from.id;
-        const isAdmin = chatAdmins.some(admin => admin.user.id === userId);
+        try {
+            const chatAdmins = await ctx.getChatAdministrators();
+            const userId = ctx.message.from.id;
+            const isAdmin = chatAdmins.some(admin => admin.user.id === userId);
 
-        if (!isAdmin) {
-            ctx.reply("❌ Hanya admin yang bisa menggunakan perintah ini!");
+            if (!isAdmin) {
+                ctx.reply("❌ Hanya admin yang bisa menggunakan perintah ini!");
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error("Error checking admin status:", error);
+            ctx.reply("❌ Gagal memeriksa status admin.");
+            return false;
         }
-        return isAdmin;
     }
 
+    // Fungsi untuk mengecek apakah user dengan ID tertentu adalah admin
     async function isAdminById(ctx, userId) {
-        const chatAdmins = await ctx.getChatAdministrators();
-        return chatAdmins.some(admin => admin.user.id === userId);
+        try {
+            const chatAdmins = await ctx.getChatAdministrators();
+            return chatAdmins.some(admin => admin.user.id === userId);
+        } catch (error) {
+            console.error("Error checking admin status by ID:", error);
+            return false;
+        }
     }
 };
