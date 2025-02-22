@@ -1,9 +1,9 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const express = require("express");
-const { connectDB, closeDB } = require("./utils/db"); // Import fungsi connectDB dan closeDB dari db.js
-const { initSewabot } = require("./features/sewabot"); // Import fungsi initSewabot
-const { setupLevelCommands } = require("./features/levelSystem"); // Import fungsi setupLevelCommands
+const { connectDB, closeDB } = require("./utils/db");
+const { initSewabot } = require("./features/sewabot");
+const { setupLevelCommands } = require("./features/levelSystem");
 const config = require("./config");
 
 // Inisialisasi bot Telegram
@@ -21,21 +21,33 @@ const app = express();
 app.get("/", (req, res) => res.send("LuffyBot is running!"));
 app.listen(PORT, () => console.log(`Express server running on port ${PORT}`));
 
+// Middleware untuk logging
+bot.use((ctx, next) => {
+  console.log(`Received message: ${ctx.message.text}`);
+  return next();
+});
+
+// Middleware untuk error handling
+bot.catch((err, ctx) => {
+  console.error(`Error for update ${ctx.update.update_id}:`, err);
+  ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
+});
+
 // Hubungkan ke MongoDB sebelum menjalankan bot
 connectDB()
   .then(() => {
     console.log("✅ MongoDB connected, loading bot features...");
 
-    // Load fitur bot
-    require("./features/welcome_exit")(bot); // Fitur welcome dan exit
-    require("./features/mute_unmute")(bot); // Fitur mute dan unmute
-    require("./features/kick_user")(bot); // Fitur kick user
-    require("./features/ban_unban")(bot); // Fitur ban dan unban
-    require("./features/random_message")(bot); // Fitur pesan acak
-    require("./features/sticker")(bot); // Fitur stiker
-    require("./features/bussid")(bot); // Fitur BUSSID
-    initSewabot(bot); // Inisialisasi fitur sewabot
-    setupLevelCommands(bot); // Setup command terkait level dan diamond
+    // Load fitur bot secara dinamis
+    const fs = require("fs");
+    const path = require("path");
+    const featuresDir = path.join(__dirname, "features");
+    fs.readdirSync(featuresDir).forEach((file) => {
+      if (file.endsWith(".js")) {
+        require(path.join(featuresDir, file))(bot);
+        console.log(`Loaded feature: ${file}`);
+      }
+    });
 
     // Menjalankan bot
     bot.launch().then(() => console.log("LuffyBot is online!"));
@@ -48,12 +60,12 @@ connectDB()
 // Graceful shutdown
 process.once("SIGINT", async () => {
   await bot.stop("SIGINT");
-  await closeDB(); // Tutup koneksi database
+  await closeDB();
   process.exit(0);
 });
 
 process.once("SIGTERM", async () => {
   await bot.stop("SIGTERM");
-  await closeDB(); // Tutup koneksi database
+  await closeDB();
   process.exit(0);
 });
