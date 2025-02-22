@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const express = require("express");
-const { connectDB, closeDB } = require("./utils/db"); // Pertahankan koneksi database
+const { connectDB, closeDB } = require("./utils/db");
 const config = require("./config");
 
 // Inisialisasi bot Telegram
@@ -29,6 +29,20 @@ bot.use((ctx, next) => {
 bot.catch((err, ctx) => {
   console.error(`Error for update ${ctx.update.update_id}:`, err);
   ctx.reply("❌ Terjadi kesalahan saat memproses permintaan Anda.");
+});
+
+// Command /myid
+bot.command("myid", (ctx) => {
+  const userId = ctx.from.id; // ID pengguna
+  const firstName = ctx.from.first_name; // Nama depan pengguna
+  const username = ctx.from.username || "Tidak ada username"; // Username (jika ada)
+
+  // Kirim balasan dengan informasi pengguna
+  ctx.reply(`
+🆔 ID Anda: <code>${userId}</code>
+👤 Nama Depan: <code>${firstName}</code>
+🔖 Username: <code>${username}</code>
+  `, { parse_mode: "HTML" }); // Gunakan parse_mode HTML untuk formatting
 });
 
 // Hubungkan ke MongoDB sebelum menjalankan bot
