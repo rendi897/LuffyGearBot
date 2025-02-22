@@ -1,6 +1,6 @@
 const config = require("../config"); // Import config.js
 
-module.exports = function (bot) => {
+module.exports = function (bot) {
     bot.command("kick", async (ctx) => {
         if (!(await isAdmin(ctx))) return;
 
