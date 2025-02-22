@@ -1,6 +1,6 @@
 const config = require("../config"); // Import config.js
 
-module.exports = (bot) => {
+module.exports = function (bot) => {
     bot.command("mute", async (ctx) => {
         if (!(await isAdmin(ctx))) return;
 
