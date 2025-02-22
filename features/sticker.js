@@ -1,7 +1,7 @@
 const axios = require("axios");
 const sharp = require("sharp");
 
-module.exports = function (bot) => {
+module.exports = function (bot) {
   bot.on("photo", async (ctx) => {
     // Mendapatkan file gambar yang dikirim
     const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
