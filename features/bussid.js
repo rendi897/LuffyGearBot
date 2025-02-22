@@ -1,7 +1,6 @@
 const axios = require("axios");
 const { Telegraf, Markup } = require("telegraf");
 const { checkUserAccess } = require("./sewabot");
-const { deductDiamond, getDiamond } = require("./levelSystem");
 const config = require("../config");
 
 // Simpan sesi login pengguna
@@ -105,9 +104,9 @@ function showMenu(ctx, sessionTicket, bot) {
 
   ctx.reply("Pilih opsi yang diinginkan:", Markup.inlineKeyboard([
     [
-      Markup.button.callback("Inject 1jt UB (-10💎)", "inject_1m"),
-      Markup.button.callback("Inject 2jt UB (-20💎)", "inject_2m"),
-      Markup.button.callback("Inject 4jt UB (-40💎)", "inject_4m")
+      Markup.button.callback("Inject 1jt UB", "inject_1m"),
+      Markup.button.callback("Inject 2jt UB", "inject_2m"),
+      Markup.button.callback("Inject 4jt UB", "inject_4m")
     ],
     [
       Markup.button.callback("Sedot 50jt UB", "reduce_50m"),
@@ -129,23 +128,19 @@ function showMenu(ctx, sessionTicket, bot) {
       } else if (["inject_1m", "inject_2m", "inject_4m", "reduce_50m", "reduce_100m"].includes(action)) {
         let value = 0;
         let label = "";
-        let diamondCost = 0;
 
         switch (action) {
           case "inject_1m":
             value = 1000000;
             label = "1jt UB";
-            diamondCost = 10;
             break;
           case "inject_2m":
             value = 2000000;
             label = "2jt UB";
-            diamondCost = 20;
             break;
           case "inject_4m":
             value = 4000000;
             label = "4jt UB";
-            diamondCost = 40;
             break;
           case "reduce_50m":
             value = -50000000;
@@ -155,17 +150,6 @@ function showMenu(ctx, sessionTicket, bot) {
             value = -100000000;
             label = "Sedot 100jt UB";
             break;
-        }
-
-        // Kurangi diamond jika menggunakan inject
-        if (diamondCost > 0) {
-          const userDiamond = await getDiamond(ctx.from.id);
-          if (userDiamond < diamondCost) {
-            return ctx.reply(`❌ Diamond Anda tidak cukup. Dibutuhkan ${diamondCost}💎, tetapi Anda hanya memiliki ${userDiamond}💎.`);
-          }
-
-          await deductDiamond(ctx.from.id, diamondCost);
-          ctx.reply(`✅ ${diamondCost}💎 telah dikurangi. Diamond Anda sekarang: ${userDiamond - diamondCost}💎`);
         }
 
         // Jalankan inject
