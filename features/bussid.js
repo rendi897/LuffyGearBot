@@ -20,7 +20,7 @@ module.exports = function (bot) {
       ctx.reply("Silakan masukkan Device ID atau X-Auth Token:");
 
       // Menggunakan 'once' agar hanya menangkap satu input
-      bot.on("text", async (ctx) => {
+      bot.once("text", async (ctx) => {
         const input = ctx.message.text;
         let sessionTicket = "";
 
