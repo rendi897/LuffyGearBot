@@ -2,6 +2,7 @@ require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const express = require("express");
 const { connectDB, closeDB } = require("./utils/db");
+const { initSewabot } = require("./features/sewabot"); // Impor initSewabot
 
 // Inisialisasi bot
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
@@ -37,6 +38,9 @@ bot.command("myid", (ctx) => {
 connectDB()
   .then(() => {
     console.log("✅ MongoDB connected, loading bot features...");
+
+    // Inisialisasi fitur sewabot
+    initSewabot(bot); // Panggil initSewabot di sini
 
     // Muat fitur secara dinamis
     const fs = require("fs");
