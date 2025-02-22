@@ -2,8 +2,7 @@ require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const express = require("express");
 const { connectDB, closeDB } = require("./utils/db");
-const { initSewabot } = require("./features/sewabot");
-const { setupLevelCommands } = require("./features/levelSystem");
+const { registerUser, addExp, addDiamond, getUserStats } = require("./features/levelSystem");
 const config = require("./config");
 
 // Inisialisasi bot Telegram
@@ -46,6 +45,68 @@ connectDB()
       if (file.endsWith(".js")) {
         require(path.join(featuresDir, file))(bot);
         console.log(`Loaded feature: ${file}`);
+      }
+    });
+
+    // Event listener untuk setiap pesan yang dikirim (Level System)
+    bot.on("message", async (ctx) => {
+      const userId = ctx.from.id;
+      const username = ctx.from.username || ctx.from.first_name;
+
+      try {
+        // Mendaftarkan pengguna secara otomatis
+        await registerUser(userId, username);
+
+        // Menambahkan exp setiap kali pengguna mengirim pesan
+        await addExp(userId, 5); // Tambahkan 5 exp setiap pesan
+      } catch (error) {
+        console.error("Error handling message:", error);
+        ctx.reply("❌ Terjadi kesalahan saat memproses pesan Anda.");
+      }
+    });
+
+    // Command /stat untuk mengecek statistik pengguna (Level System)
+    bot.command("stat", async (ctx) => {
+      const userId = ctx.from.id;
+
+      try {
+        const stats = await getUserStats(userId);
+        ctx.reply(`Level: ${stats.level}\nExp: ${stats.exp}\n💎 Diamond: ${stats.diamond}`);
+      } catch (error) {
+        console.error("Error in /stat command:", error);
+        ctx.reply("❌ Gagal mengambil statistik pengguna.");
+      }
+    });
+
+    // Command /topup untuk menambah diamond (hanya admin)
+    bot.command("topup", async (ctx) => {
+      const userId = ctx.from.id;
+      const args = ctx.message.text.split(" ");
+
+      // Cek apakah pengguna adalah admin
+      const isAdmin = true; // Ganti dengan logika pengecekan admin Anda
+      if (!isAdmin) {
+        return ctx.reply("❌ Hanya admin yang bisa menggunakan command ini.");
+      }
+
+      // Validasi input
+      if (args.length < 3) {
+        return ctx.reply("❌ Format: /topup <user_id> <jumlah_diamond>");
+      }
+
+      const targetUserId = parseInt(args[1]);
+      const diamondToAdd = parseInt(args[2]);
+
+      if (isNaN(targetUserId) || isNaN(diamondToAdd)) {
+        return ctx.reply("❌ User ID atau jumlah diamond tidak valid.");
+      }
+
+      try {
+        const newDiamond = await addDiamond(targetUserId, diamondToAdd);
+        ctx.reply(`✅ Berhasil menambahkan ${diamondToAdd}💎 ke user ${targetUserId}. Total diamond sekarang: ${newDiamond}💎`);
+      } catch (error) {
+        console.error("Error in /topup command:", error);
+        ctx.reply(`❌ Gagal menambahkan diamond: ${error.message}`);
       }
     });
 
