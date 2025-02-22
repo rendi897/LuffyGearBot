@@ -70,6 +70,6 @@ function sendRandomMessage(bot) {
     setTimeout(() => sendRandomMessage(bot), getRandomInterval());
 }
 
-module.exports = function (bot) => {
+module.exports = function (bot) {
     setTimeout(() => sendRandomMessage(bot), getRandomInterval());
 };
